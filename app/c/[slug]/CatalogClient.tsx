@@ -127,14 +127,15 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       // build wa.me url
       const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(message)}`;
 
-      // store result and show modal/confirmation to user
-      setOrderResult({ url: publicUrl, orderId: id, waUrl });
-      setShowOrderModal(true);
-
       // try to navigate previously opened window to avoid popup blocking; otherwise user can click 'Abrir WhatsApp' in modal
       if (externalWin && !externalWin.closed) {
         try { externalWin.location.href = waUrl; } catch (e) { /* ignore */ }
       }
+
+      // store result and show modal/confirmation to user
+      const orderId = (result?.orderId || result?.id || '').toString();
+      setOrderResult({ url: publicUrl, orderId, waUrl });
+      setShowOrderModal(true);
 
       // close cart
       setCart([]);
