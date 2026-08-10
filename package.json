@@ -1,7 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1100">
-<rect width="900" height="1100" fill="#efeff0"/>
-<path d="M350 245h200l78 105 142 78-78 150-77-43 31 322H254l31-322-77 43-78-150 142-78 78-105Z" fill="#141414"/>
-<path d="M450 247v610" stroke="#8e2043" stroke-width="14"/>
-<path d="M353 248c14 73 180 73 194 0" fill="none" stroke="#8e2043" stroke-width="16"/>
-<text x="70" y="990" font-family="Arial" font-size="52" font-weight="700" fill="#8e2043">NOIR JACKET</text>
-</svg>
+{
+  "name": "crisdal-catalog-storefront",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "lucide-react": "^0.468.0",
+    "next": "16.3.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}
