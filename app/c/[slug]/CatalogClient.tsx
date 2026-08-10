@@ -82,7 +82,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       page.drawText(`Total: ${total.toFixed(2)}`, { x: 40, y: y - 10, size: 14, font });
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
 
       const filename = `orders/${catalog.slug||'catalog'}-${Date.now()}.pdf`;
       const bucket = (process.env.NEXT_PUBLIC_SUPABASE_ORDERS_BUCKET || 'public');
