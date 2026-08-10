@@ -1,0 +1,1 @@
+import { NextResponse } from 'next/server';\n\nexport async function GET() {\n  return NextResponse.json({ ok: true, time: new Date().toISOString() });\n}\n
