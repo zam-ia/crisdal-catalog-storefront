@@ -1,0 +1,1 @@
+export default function handler(req, res) {\n  res.status(200).json({ ok: true, time: new Date().toISOString(), route: 'pages/api/health' });\n}\n
