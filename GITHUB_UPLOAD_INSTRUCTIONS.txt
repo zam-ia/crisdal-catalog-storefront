@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1100">
+<rect width="900" height="1100" fill="#f4f0ea"/>
+<path d="M135 690c113-44 221-147 319-226 47-38 106-48 160-23 93 44 161 127 203 220 24 53-12 115-70 123-188 28-388 27-577-2-57-9-75-72-35-92Z" fill="#302a27"/>
+<path d="M420 490c60 35 126 63 194 79" fill="none" stroke="#f1d6b8" stroke-width="18" stroke-linecap="round"/>
+<path d="M204 766h537" stroke="#8e2043" stroke-width="15" stroke-linecap="round"/>
+<text x="70" y="990" font-family="Arial" font-size="52" font-weight="700" fill="#8e2043">CLASSIC LOAFER</text>
+</svg>

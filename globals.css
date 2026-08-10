@@ -1,0 +1,1 @@
+export default function NotFound(){return <main style={{minHeight:'100vh',display:'grid',placeItems:'center',fontFamily:'system-ui',padding:20}}><div><h1>Catálogo no disponible</h1><p>Revisa el enlace o confirma que el catálogo esté publicado.</p></div></main>}
