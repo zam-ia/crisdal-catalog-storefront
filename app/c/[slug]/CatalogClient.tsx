@@ -14,11 +14,19 @@ export default function CatalogClient({ catalog, categories, products }: { catal
   const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [addedItem, setAddedItem] = useState<string | null>(null);
+  const [toast, setToast] = useState<{message:string,type?:'info'|'success'|'error'} | null>(null);
+  const [orderResult, setOrderResult] = useState<{url:string, orderId:string, waUrl?:string} | null>(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
   const visible = useMemo(()=>products.filter(p => (category==='all'||p.category_id===category) && `${p.name} ${p.short_description||''}`.toLowerCase().includes(search.toLowerCase())),[products,category,search]);
   const money = (n:number) => new Intl.NumberFormat("es-PE",{style:"currency",currency:catalog.currency||"PEN"}).format(Number(n));
   const wa = catalog.whatsapp_number?.replace(/\D/g,'');
   const productWa = (p:Product) => wa ? `https://wa.me/${wa}?text=${encodeURIComponent(`Hola, quiero información sobre ${p.name} (${money(p.price)})`)}` : '#';
+
+  function showToastMessage(message: string, type: 'info'|'success'|'error' = 'info'){
+    setToast({ message, type });
+    window.setTimeout(()=>setToast(null), 3000);
+  }
 
   function addToCart(p: Product) {
     setCart(prev => {
@@ -29,6 +37,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
     // show quick visual feedback
     setAddedItem(p.id);
     setTimeout(()=>setAddedItem(null), 1000);
+    showToastMessage('Añadido al carrito', 'success');
   }
 
   function removeFromCart(id:string) { setCart(prev=>prev.filter(i=>i.id!==id)); }
@@ -115,21 +124,27 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       }
       message += `Total: ${money(total)}\n\nVer PDF: ${publicUrl}`;
 
-      // open wa.me (navigate the previously opened window to avoid popup blocking)
+      // build wa.me url
       const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(message)}`;
+
+      // store result and show modal/confirmation to user
+      setOrderResult({ url: publicUrl, orderId: id, waUrl });
+      setShowOrderModal(true);
+
+      // try to navigate previously opened window to avoid popup blocking; otherwise user can click 'Abrir WhatsApp' in modal
       if (externalWin && !externalWin.closed) {
-        try { externalWin.location.href = waUrl; } catch (e) { window.open(waUrl, '_blank'); }
-      } else {
-        window.open(waUrl, '_blank');
+        try { externalWin.location.href = waUrl; } catch (e) { /* ignore */ }
       }
 
       // close cart
       setCart([]);
       setCartOpen(false);
+      showToastMessage('Pedido creado. Abre WhatsApp para enviar.', 'success');
 
     } catch (err: any) {
       console.error(err);
       if (externalWin && !externalWin.closed) try { externalWin.close(); } catch(e) {}
+      showToastMessage('Error generando o subiendo el PDF', 'error');
       alert('Error generando o subiendo el PDF: ' + (err.message||String(err)));
     } finally { setLoading(false); }
   }
@@ -154,6 +169,25 @@ export default function CatalogClient({ catalog, categories, products }: { catal
     <footer className="footer"><div><strong>{catalog.name}</strong><div style={{opacity:.6,marginTop:5}}>Catálogo administrado por CRISDAL Agency</div></div><div style={{display:'flex',gap:18}}>{catalog.instagram_url&&<a href={catalog.instagram_url} target="_blank">Instagram</a>}{catalog.tiktok_url&&<a href={catalog.tiktok_url} target="_blank">TikTok</a>}</div></footer>
 
     {wa&&<a className="floating" href={`https://wa.me/${wa}`} target="_blank">WhatsApp</a>}
+
+    {/* TOAST */}
+    {toast && <div role="status" aria-live="polite" style={{position:'fixed',right:20,top:20,zIndex:9999,minWidth:200,padding:'12px 16px',borderRadius:10,color:'#fff',boxShadow:'0 8px 20px rgba(0,0,0,.15)',background: toast.type==='error'? '#c0392b': toast.type==='success'? '#27ae60' : '#2d9cdb'}}>{toast.message}</div>}
+
+    {/* ORDER MODAL */}
+    {showOrderModal && orderResult && <div style={{position:'fixed',left:0,top:0,right:0,bottom:0,display:'flex',alignItems:'center',justifyContent:'center',zIndex:9998}}>
+      <div style={{background:'var(--bg)',padding:20,borderRadius:12,boxShadow:'0 30px 80px rgba(0,0,0,.35)',width:'min(720px,95%)'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <strong>Pedido creado</strong>
+          <button className="chip" onClick={()=>{setShowOrderModal(false); setOrderResult(null);}}>Cerrar</button>
+        </div>
+        <div style={{marginBottom:12}}>ID: <code style={{background:'rgba(0,0,0,.04)',padding:'4px 8px',borderRadius:6}}>{orderResult.orderId}</code></div>
+        <div style={{marginBottom:12}}>PDF: <a href={orderResult.url} target="_blank" rel="noreferrer">Abrir PDF</a></div>
+        <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
+          <button className="cta" onClick={()=>{ if (orderResult?.waUrl) window.open(orderResult.waUrl,'_blank'); setShowOrderModal(false); setOrderResult(null);}}>Abrir WhatsApp</button>
+          <button className="chip" onClick={()=>{ navigator.clipboard?.writeText(orderResult.url); showToastMessage('Enlace copiado al portapapeles','success'); }}>Copiar enlace</button>
+        </div>
+      </div>
+    </div>}
 
     {/* CART FLOAT */}
     <button onClick={()=>setCartOpen(true)} style={{position:'fixed',right:20,bottom:20,zIndex:40,background:'#111',color:'#fff',padding:'12px 16px',borderRadius:999,fontWeight:900,boxShadow:'0 12px 30px rgba(0,0,0,.2)'}}>{`Carrito (${cart.reduce((s,c)=>s+c.qty,0)})`}</button>
