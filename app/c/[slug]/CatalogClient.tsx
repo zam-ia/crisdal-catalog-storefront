@@ -87,10 +87,11 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       const filename = `orders/${catalog.slug||'catalog'}-${Date.now()}.pdf`;
       const bucket = (process.env.NEXT_PUBLIC_SUPABASE_ORDERS_BUCKET || 'public');
 
-      const { data: uploadData, error: uploadError } = await supabase.storage.from(bucket).upload(filename, blob as any, { upsert: true });
-      if (uploadError) throw uploadError;
-      const { data: publicUrlData } = supabase.storage.from(bucket).getPublicUrl(filename);
-      const publicUrl = publicUrlData.publicUrl;
+      // call server API to generate PDF and save order
+      const res = await fetch('/api/orders/generate-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cart, catalog }) });
+      const result = await res.json();
+      if (result.error) throw new Error(result.error);
+      const publicUrl = result.url;
 
       // build message
       let message = `Nuevo pedido desde ${catalog.name || 'Catálogo'}:\n`;
