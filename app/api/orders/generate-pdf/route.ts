@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseServer } from '@/lib/supabaseServer';
+import { getSupabaseServer } from '@/lib/supabaseServer';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -62,6 +62,8 @@ export async function POST(req: Request) {
     const id = uuidv4();
     const filename = `orders/${catalog.slug || 'catalog'}-${id}.pdf`;
     const bucket = process.env.SUPABASE_ORDERS_BUCKET || 'orders';
+
+    const supabaseServer = getSupabaseServer();
 
     const { data: uploadData, error: uploadError } = await supabaseServer.storage.from(bucket).upload(filename, Buffer.from(pdfBytes), { contentType: 'application/pdf', upsert: true });
     if (uploadError) return NextResponse.json({ error: uploadError.message }, { status: 500 });
