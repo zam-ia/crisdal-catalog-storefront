@@ -13,6 +13,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
   const [cart, setCart] = useState<any[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [addedItem, setAddedItem] = useState<string | null>(null);
 
   const visible = useMemo(()=>products.filter(p => (category==='all'||p.category_id===category) && `${p.name} ${p.short_description||''}`.toLowerCase().includes(search.toLowerCase())),[products,category,search]);
   const money = (n:number) => new Intl.NumberFormat("es-PE",{style:"currency",currency:catalog.currency||"PEN"}).format(Number(n));
@@ -25,6 +26,9 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       if (found) return prev.map(i=>i.id===p.id?{...i,qty:i.qty+1}:i);
       return [...prev,{ id:p.id, name:p.name, price: Number(p.price||0), image_url:p.image_url, qty:1 }];
     });
+    // show quick visual feedback
+    setAddedItem(p.id);
+    setTimeout(()=>setAddedItem(null), 1000);
   }
 
   function removeFromCart(id:string) { setCart(prev=>prev.filter(i=>i.id!==id)); }
@@ -34,6 +38,15 @@ export default function CatalogClient({ catalog, categories, products }: { catal
     if (!cart.length) return alert('El carrito está vacío');
     if (!wa) return alert('Número de WhatsApp no configurado en el catálogo');
     setLoading(true);
+
+    // Open a blank window immediately to avoid popup blockers. Will navigate it later.
+    let externalWin: Window | null = null;
+    try {
+      externalWin = window.open('about:blank', '_blank');
+    } catch (e) {
+      externalWin = null;
+    }
+
     try {
       const pdfDoc = await PDFDocument.create();
       let page = pdfDoc.addPage([595, 842]);
@@ -84,11 +97,13 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
 
-      const filename = `orders/${catalog.slug||'catalog'}-${Date.now()}.pdf`;
-      const bucket = (process.env.NEXT_PUBLIC_SUPABASE_ORDERS_BUCKET || 'public');
-
       // call server API to generate PDF and save order
       const res = await fetch('/api/orders/generate-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cart, catalog }) });
+      if (!res.ok) {
+        // try to extract server message
+        const txt = await res.text().catch(()=>null);
+        throw new Error(txt || `Server returned ${res.status}`);
+      }
       const result = await res.json();
       if (result.error) throw new Error(result.error);
       const publicUrl = result.url;
@@ -100,9 +115,13 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       }
       message += `Total: ${money(total)}\n\nVer PDF: ${publicUrl}`;
 
-      // open wa.me with message
+      // open wa.me (navigate the previously opened window to avoid popup blocking)
       const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(message)}`;
-      window.open(waUrl, '_blank');
+      if (externalWin && !externalWin.closed) {
+        try { externalWin.location.href = waUrl; } catch (e) { window.open(waUrl, '_blank'); }
+      } else {
+        window.open(waUrl, '_blank');
+      }
 
       // close cart
       setCart([]);
@@ -110,6 +129,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
 
     } catch (err: any) {
       console.error(err);
+      if (externalWin && !externalWin.closed) try { externalWin.close(); } catch(e) {}
       alert('Error generando o subiendo el PDF: ' + (err.message||String(err)));
     } finally { setLoading(false); }
   }
@@ -124,7 +144,11 @@ export default function CatalogClient({ catalog, categories, products }: { catal
 
     <main className="wrap" id="catalogo"><div className="section-head"><div><h2>Catálogo</h2><div className="count">{visible.length} productos</div></div></div><div className="toolbar"><div className="chips"><button className={`chip ${category==='all'?'active':''}`} onClick={()=>setCategory('all')}>Todos</button>{categories.map(c=><button key={c.id} className={`chip ${category===c.id?'active':''}`} onClick={()=>setCategory(c.id)}>{c.name}</button>)}</div><div style={{position:'relative'}}><Search size={17} style={{position:'absolute',left:14,top:13,opacity:.5}}/><input className="search" style={{paddingLeft:40}} placeholder="Buscar…" value={search} onChange={e=>setSearch(e.target.value)}/></div></div>
 
-      {visible.length ? <div className="products">{visible.map(p=><article className="product" key={p.id}><div className="image-wrap"><a href={`/c/${catalog.slug}/p/${p.id}`}><img src={p.image_url||'/demo/sneaker.svg'} alt={p.name}/></a>{p.badge&&<span className="badge">{p.badge}</span>}<span className="stock">{p.stock_status==='out'?'Agotado':p.stock_status==='low'?'Últimas unidades':'Disponible'}</span></div><div className="product-body"><h3><a href={`/c/${catalog.slug}/p/${p.id}`} style={{color:'inherit',textDecoration:'none'}}>{p.name}</a></h3><div className="desc">{p.short_description||'Consulta disponibilidad y variantes.'}</div><div className="prices"><span className="price">{money(p.price)}</span>{p.compare_at_price&&<span className="compare">{money(p.compare_at_price)}</span>}</div><div className="variants">{p.variants?.sizes?.length?`Tallas: ${p.variants.sizes.join(', ')}`:''}{p.variants?.sizes?.length&&p.variants?.colors?.length?' · ':''}{p.variants?.colors?.length?`Colores: ${p.variants.colors.join(', ')}`:''}</div><div style={{display:'flex',gap:8,marginTop:12}}>{wa&&p.stock_status!=='out'?<a className="cta" href={productWa(p)} target="_blank">Consultar por WhatsApp</a>:<span className="cta" style={{opacity:.5}}>No disponible</span>}<button className="chip" onClick={()=>addToCart(p)} style={{padding:'8px 12px'}}>Añadir</button></div></div></article>)}</div>:<div className="empty">No encontramos productos con ese filtro.</div>}
+      {visible.length ? <div className="products">{visible.map(p=><article className="product" key={p.id}><div className="image-wrap"><a href={`/c/${catalog.slug}/p/${p.id}`}><img src={p.image_url||'/demo/sneaker.svg'} alt={p.name}/></a>{p.badge&&<span className="badge">{p.badge}</span>}<span className="stock">{p.stock_status==='out'?'Agotado':p.stock_status==='low'?'Últimas unidades':'Disponible'}</span></div><div className="product-body"><h3><a href={`/c/${catalog.slug}/p/${p.id}`} style={{color:'inherit',textDecoration:'none'}}>{p.name}</a></h3><div className="desc">{p.short_description||'Consulta disponibilidad y variantes.'}</div><div className="prices"><span className="price">{money(p.price)}</span>{p.compare_at_price&&<span className="compare">{money(p.compare_at_price)}</span>}</div><div className="variants">{p.variants?.sizes?.length?`Tallas: ${p.variants.sizes.join(', ')}`:''}{p.variants?.sizes?.length&&p.variants?.colors?.length?' · ':''}{p.variants?.colors?.length?`Colores: ${p.variants.colors.join(', ')}`:''}</div>      <div style={{display:'flex',gap:8,marginTop:12}}>{wa&&p.stock_status!=='out'?<a className="cta" href={productWa(p)} target="_blank">Consultar por WhatsApp</a>:<span className="cta" style={{opacity:.5}}>No disponible</span>}
+        <button className="chip" onClick={()=>addToCart(p)} style={{padding:'8px 12px'}}>
+          {addedItem===p.id ? '¡Añadido!' : 'Añadir'}
+        </button>
+      </div></div></article>)}</div>:<div className="empty">No encontramos productos con ese filtro.</div>}
     </main>
 
     <footer className="footer"><div><strong>{catalog.name}</strong><div style={{opacity:.6,marginTop:5}}>Catálogo administrado por CRISDAL Agency</div></div><div style={{display:'flex',gap:18}}>{catalog.instagram_url&&<a href={catalog.instagram_url} target="_blank">Instagram</a>}{catalog.tiktok_url&&<a href={catalog.tiktok_url} target="_blank">TikTok</a>}</div></footer>
