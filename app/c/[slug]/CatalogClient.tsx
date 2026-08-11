@@ -106,7 +106,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
 
-      // call server API to generate PDF and save order
+        // call server API to generate PDF and save order
       const res = await fetch('/api/orders/generate-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cart, catalog }) });
       if (!res.ok) {
         // try to extract server message
@@ -116,31 +116,49 @@ export default function CatalogClient({ catalog, categories, products }: { catal
       const result = await res.json();
       if (result.error) throw new Error(result.error);
       const publicUrl = result.url;
+        const orderId = (result?.orderId || result?.id || '').toString();
 
-      // build message
-      let message = `Nuevo pedido desde ${catalog.name || 'Catálogo'}:\n`;
-      for (const item of cart) {
-        message += `- ${item.name} x${item.qty} => ${money(item.price * item.qty)}\n`;
-      }
-      message += `Total: ${money(total)}\n\nVer PDF: ${publicUrl}`;
+        // build message text (without exposing raw URL as primary content)
+        let message = `Nuevo pedido desde ${catalog.name || 'Catálogo'}:\n`;
+        for (const item of cart) {
+          message += `- ${item.name} x${item.qty} => ${money(item.price * item.qty)}\n`;
+        }
+        message += `Total: ${money(total)}\n`;
+        if (catalog.payment_info) message += `\nInstrucciones de pago:\n${catalog.payment_info}\n`;
 
-      // build wa.me url
-      const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(message)}`;
+        // attempt to share the generated PDF file via Web Share API (files) when supported
+        let shared = false;
+        try {
+          // fetch PDF blob from public URL
+          const pdfResp = await fetch(publicUrl);
+          if (pdfResp.ok) {
+            const blob = await pdfResp.blob();
+            const fname = `pedido-${catalog.slug || 'catalog'}-${orderId}.pdf`;
+            const file = new File([blob as any], fname, { type: 'application/pdf' });
 
-      // try to navigate previously opened window to avoid popup blocking; otherwise user can click 'Abrir WhatsApp' in modal
-      if (externalWin && !externalWin.closed) {
-        try { externalWin.location.href = waUrl; } catch (e) { /* ignore */ }
-      }
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await (navigator as any).share({ files: [file], title: `Pedido ${orderId}`, text: message });
+              // inform server that we've sent via WhatsApp (optional)
+              try { await fetch('/api/orders/mark-sent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ orderId }) }); } catch(e){}
+              shared = true;
+            }
+          }
+        } catch (e) { /* ignore share errors and fallback */ }
 
-      // store result and show modal/confirmation to user
-      const orderId = (result?.orderId || result?.id || '').toString();
-      setOrderResult({ url: publicUrl, orderId, waUrl });
-      setShowOrderModal(true);
+        // if share wasn't possible, fallback to wa.me link (opens web/whatsapp page)
+        const waUrl = `https://wa.me/${wa}?text=${encodeURIComponent(message + '\nVer PDF: ' + publicUrl)}`;
+        if (!shared) {
+          try { window.open(waUrl, '_blank'); } catch(e) { /* ignore */ }
+        }
 
-      // close cart
-      setCart([]);
-      setCartOpen(false);
-      showToastMessage('Pedido creado. Abre WhatsApp para enviar.', 'success');
+        // store result and show modal/confirmation to user
+        setOrderResult({ url: publicUrl, orderId, waUrl });
+        setShowOrderModal(true);
+
+        // close cart
+        setCart([]);
+        setCartOpen(false);
+        showToastMessage('Pedido creado. Abre WhatsApp para enviar.', 'success');
 
     } catch (err: any) {
       console.error(err);

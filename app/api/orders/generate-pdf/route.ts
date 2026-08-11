@@ -57,6 +57,19 @@ export async function POST(req: Request) {
 
     page.drawText(`Total: S/ ${total.toFixed(2)}`, { x: 40, y: y - 10, size: 14, font });
 
+    // payment info from catalog (optional)
+    if (catalog.payment_info) {
+      let y2 = y - 40;
+      if (y2 < 120) { page = pdfDoc.addPage([595,842]); y2 = 800; }
+      page.drawText('Instrucciones de pago:', { x: 40, y: y2, size: 12, font: fontNormal });
+      y2 -= 16;
+      const lines = String(catalog.payment_info).split(/\r?\n/).slice(0,10);
+      for (const ln of lines) {
+        page.drawText(ln, { x: 40, y: y2, size: 11, font: fontNormal });
+        y2 -= 14;
+      }
+    }
+
     const pdfBytes = await pdfDoc.save();
 
     const id = uuidv4();
