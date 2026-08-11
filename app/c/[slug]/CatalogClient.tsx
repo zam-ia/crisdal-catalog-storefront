@@ -156,7 +156,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
   }}>
     <nav className="nav"><div className="nav-inner"><div className="nav-brand"><img className="logo" src={catalog.logo_url||'/brand/crisdal-shop.png'} alt={catalog.name}/><div><strong>{catalog.name}</strong><div style={{fontSize:11,opacity:.6}}>CATÁLOGO DIGITAL</div></div></div><a className="chip active" href="#catalogo">Ver productos</a></div></nav>
 
-    <header className="hero"><div className="hero-copy"><h1>{catalog.hero_title||catalog.name}</h1><p>{catalog.hero_subtitle||catalog.description}</p><div className="chips" style={{marginTop:24}}>{categories.slice(0,4).map(c=><button key={c.id} className="chip" onClick={()=>{setCategory(c.id);document.getElementById('catalogo')?.scrollIntoView()}}>{c.name}</button>)}</div></div><div className="hero-panel"><img src={catalog.logo_url||'/brand/crisdal-shop.png'} alt=""/></div></header>
+    <header className="hero"><div className="hero-copy"><h1>{catalog.hero_title||catalog.name}</h1><p>{catalog.hero_subtitle||catalog.description}</p><div className="chips" style={{marginTop:24}}>{categories.slice(0,4).map(c=><button key={c.id} className="chip" onClick={()=>{setCategory(c.id);document.getElementById('catalogo')?.scrollIntoView()}}>{c.name}</button>)}</div></div>{catalog.hero_image ? <div className="hero-panel"><img src={catalog.hero_image} alt=""/></div> : null}</header>
 
     <main className="wrap" id="catalogo"><div className="section-head"><div><h2>Catálogo</h2><div className="count">{visible.length} productos</div></div></div><div className="toolbar"><div className="chips"><button className={`chip ${category==='all'?'active':''}`} onClick={()=>setCategory('all')}>Todos</button>{categories.map(c=><button key={c.id} className={`chip ${category===c.id?'active':''}`} onClick={()=>setCategory(c.id)}>{c.name}</button>)}</div><div style={{position:'relative'}}><Search size={17} style={{position:'absolute',left:14,top:13,opacity:.5}}/><input className="search" style={{paddingLeft:40}} placeholder="Buscar…" value={search} onChange={e=>setSearch(e.target.value)}/></div></div>
 
@@ -191,7 +191,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
     </div>}
 
     {/* CART FLOAT */}
-    <button onClick={()=>setCartOpen(true)} style={{position:'fixed',right:20,bottom:20,zIndex:40,background:'#111',color:'#fff',padding:'12px 16px',borderRadius:999,fontWeight:900,boxShadow:'0 12px 30px rgba(0,0,0,.2)'}}>{`Carrito (${cart.reduce((s,c)=>s+c.qty,0)})`}</button>
+    <button className="cart-floating" onClick={()=>setCartOpen(true)}>{`Carrito (${cart.reduce((s,c)=>s+c.qty,0)})`}</button>
 
     {cartOpen && <div style={{position:'fixed',right:20,bottom:80,zIndex:50,width:360,maxHeight:'70vh',overflow:'auto',background:'var(--bg)',border:'1px solid rgba(0,0,0,.08)',boxShadow:'0 18px 45px rgba(0,0,0,.12)',borderRadius:12,padding:18}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}><strong>Tu pedido</strong><div><button className="chip" onClick={()=>{setCart([])}} style={{marginRight:8}}>Vaciar</button><button className="chip" onClick={()=>setCartOpen(false)}>Cerrar</button></div></div>
