@@ -169,7 +169,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
 
     <footer className="footer"><div><strong>{catalog.name}</strong><div style={{opacity:.6,marginTop:5}}>Catálogo administrado por CRISDAL Agency</div></div><div style={{display:'flex',gap:18}}>{catalog.instagram_url&&<a href={catalog.instagram_url} target="_blank">Instagram</a>}{catalog.tiktok_url&&<a href={catalog.tiktok_url} target="_blank">TikTok</a>}</div></footer>
 
-    {wa&&<a className="floating" href={`https://wa.me/${wa}`} target="_blank" aria-label="WhatsApp"><img src="/wsp-icon.png" alt="WhatsApp" style={{width:36,height:36}}/></a>}
+    {wa&&<a className="floating" href={`https://wa.me/${wa}`} target="_blank" aria-label="WhatsApp"><img src="/wsp-icon.svg" alt="WhatsApp" style={{width:36,height:36}}/></a>}
 
     {/* TOAST */}
     {toast && <div role="status" aria-live="polite" style={{position:'fixed',right:20,top:20,zIndex:9999,minWidth:200,padding:'12px 16px',borderRadius:10,color:'#fff',boxShadow:'0 8px 20px rgba(0,0,0,.15)',background: toast.type==='error'? '#c0392b': toast.type==='success'? '#27ae60' : '#2d9cdb'}}>{toast.message}</div>}
@@ -192,7 +192,7 @@ export default function CatalogClient({ catalog, categories, products }: { catal
 
     {/* CART FLOAT */}
     <button className="cart-floating" onClick={()=>setCartOpen(true)} aria-label="Abrir carrito">
-      <img src="/cart-icon.png" alt="Carrito" style={{width:28,height:28,marginRight:8}}/>
+      <img src="/cart-icon.svg" alt="Carrito" style={{width:28,height:28,marginRight:8}}/>
       <span style={{display:'inline-block',minWidth:54}}>{`Carrito (${cart.reduce((s,c)=>s+c.qty,0)})`}</span>
     </button>
 
