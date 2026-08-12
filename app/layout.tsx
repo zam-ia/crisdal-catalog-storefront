@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Catálogos CRISDAL",
-  description: "Catálogos digitales administrados por CRISDAL Agency"
+  title: "CRISDAL Agency | Catálogos digitales",
+  description: "Catálogos digitales personalizados, responsivos y fáciles de compartir por link o QR."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

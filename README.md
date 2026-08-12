@@ -1,4 +1,6 @@
 # CRISDAL Catalog Storefront
+
+Consulta [PLAN_MAESTRO_PRODUCTO.md](./PLAN_MAESTRO_PRODUCTO.md) para la visión, arquitectura, criterios de aceptación y roadmap.
 Frontend público multi-catálogo. Ruta: `/c/{slug}`.
 
 ## Inicio rápido
