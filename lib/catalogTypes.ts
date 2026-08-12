@@ -19,6 +19,19 @@ export type Catalog = {
   tiktok_url: string | null;
   payment_info?: string | null;
   layout_style: string;
+  settings?: CatalogSettings | null;
+};
+
+export type CatalogSettings = {
+  business_category?: string;
+  brand_colors?: string[];
+  splash_enabled?: boolean;
+  splash_kicker?: string;
+  splash_button_label?: string;
+  cta_mode?: "whatsapp_order" | "call_waiter" | "view_only";
+  waiter_message?: string;
+  table_label?: string;
+  show_search?: boolean;
 };
 
 export type Category = {
@@ -43,11 +56,25 @@ export type Product = {
   image_url: string | null;
   gallery: string[] | null;
   badge: string | null;
-  variants: { sizes?: string[]; colors?: string[] } | null;
+  variants: ProductVariants | null;
   stock_status: "available" | "low" | "out";
   is_featured: boolean;
 };
 
+export type ProductVariants = {
+  sizes?: string[];
+  colors?: string[];
+  tags?: string[];
+  spicy_level?: "none" | "mild" | "medium" | "hot";
+  recommended_product_ids?: string[];
+};
+
 export function productImages(product: Product) {
-  return Array.from(new Set([product.image_url, ...(product.gallery ?? [])].filter((value): value is string => Boolean(value))));
+  return Array.from(
+    new Set(
+      [product.image_url, ...(product.gallery ?? [])].filter(
+        (value): value is string => Boolean(value),
+      ),
+    ),
+  );
 }

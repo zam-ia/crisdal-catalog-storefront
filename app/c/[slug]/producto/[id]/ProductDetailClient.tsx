@@ -24,7 +24,7 @@ export default function ProductDetailClient({ catalog, product }: { catalog: Cat
 
   return (
     <main className="detail-site" style={themeStyle}>
-      <nav className="detail-nav"><Link href={`/c/${catalog.slug}`}><ArrowLeft size={18} /> Volver al catálogo</Link><Link className="detail-brand" href={`/c/${catalog.slug}`}><Image src={catalog.logo_url || "/brand/crisdal-shop.png"} alt="" width={42} height={42} /><strong>{catalog.name}</strong></Link></nav>
+      <nav className="detail-nav"><Link href={`/c/${catalog.slug}`}><ArrowLeft size={18} /> Volver al catálogo</Link><Link className="detail-brand" href={`/c/${catalog.slug}`}><Image src={catalog.logo_url || "/brand/catalog-placeholder.svg"} alt="" width={42} height={42} /><strong>{catalog.name}</strong></Link></nav>
       <div className="detail-layout">
         <section className="detail-gallery" aria-label={`Fotos de ${product.name}`}>
           <div className="detail-main-image"><Image src={images[imageIndex] || "/demo/sneaker.svg"} alt={product.name} fill sizes="(max-width: 860px) 100vw, 56vw" priority />{images.length > 1 ? <><button className="gallery-arrow previous" onClick={() => moveImage(-1)} aria-label="Imagen anterior"><ChevronLeft /></button><button className="gallery-arrow next" onClick={() => moveImage(1)} aria-label="Imagen siguiente"><ChevronRight /></button><span className="gallery-counter">{imageIndex + 1} / {images.length}</span></> : null}</div>
